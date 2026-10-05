@@ -31,14 +31,15 @@ jobs:
         run: |
           mv ../go-xurrent ./go-xurrent
           sed -i 's|replace github.com/xurrent/go-xurrent => ../go-xurrent|replace github.com/xurrent/go-xurrent => ./go-xurrent|' go.mod
+          go mod vendor
           go mod download
 
       - name: Unit tests
         working-directory: xurrent-mcp
-        run: go test ./internal/... -count=1 -short -v
+        run: go test -mod=vendor ./internal/... -count=1 -short -v
       - name: MCP harness tests
         working-directory: xurrent-mcp
-        run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
+        run: go test -mod=vendor -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
     runs-on: ubuntu-latest
