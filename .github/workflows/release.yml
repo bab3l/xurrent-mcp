@@ -22,7 +22,7 @@ jobs:
       - name: Checkout go-xurrent
         uses: actions/checkout@v4
         with:
-          repository: xurrent/go-xurrent
+          repository: bab3l/go-xurrent
           path: go-xurrent
       - uses: actions/setup-go@v5
         with:

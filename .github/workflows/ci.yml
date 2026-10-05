@@ -18,7 +18,7 @@ jobs:
       - name: Checkout go-xurrent
         uses: actions/checkout@v4
         with:
-          repository: xurrent/go-xurrent
+          repository: bab3l/go-xurrent
           path: go-xurrent
       - uses: actions/setup-go@v5
         with:
@@ -41,7 +41,7 @@ jobs:
       - name: Checkout go-xurrent
         uses: actions/checkout@v4
         with:
-          repository: xurrent/go-xurrent
+          repository: bab3l/go-xurrent
           path: go-xurrent
       - uses: actions/setup-go@v5
         with:
@@ -65,7 +65,7 @@ jobs:
       - name: Checkout go-xurrent
         uses: actions/checkout@v4
         with:
-          repository: xurrent/go-xurrent
+          repository: bab3l/go-xurrent
           path: go-xurrent
       - uses: actions/setup-go@v5
         with:
@@ -85,7 +85,7 @@ jobs:
       - name: Checkout go-xurrent
         uses: actions/checkout@v4
         with:
-          repository: xurrent/go-xurrent
+          repository: bab3l/go-xurrent
           path: go-xurrent
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
