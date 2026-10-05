@@ -10,7 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # needs: lint — temporarily disabled; golangci-lint action needs Go 1.26 support
+    permissions:
+      contents: read
     steps:
       - name: Checkout xurrent-mcp
         uses: actions/checkout@v4
@@ -32,7 +33,9 @@ jobs:
           GONOSUMDB: '*'
           GONOSUMCHECK: '*'
           GOPRIVATE: 'github.com/xurrent/*'
-        run: go mod download
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          go mod download
 
       - name: Unit tests
         working-directory: xurrent-mcp
