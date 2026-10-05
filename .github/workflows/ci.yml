@@ -49,9 +49,19 @@ jobs:
           cache-dependency-path: xurrent-mcp/go.sum
       - name: Unit tests
         working-directory: xurrent-mcp
+        env:
+          GOFLAGS: -mod=mod
+          GONOSUMDB: "*"
+          GONOSUMCHECK: "*"
+          GOPRIVATE: "github.com/xurrent/*"
         run: go test ./internal/... -count=1 -short -v
       - name: MCP harness tests
         working-directory: xurrent-mcp
+        env:
+          GOFLAGS: -mod=mod
+          GONOSUMDB: "*"
+          GONOSUMCHECK: "*"
+          GOPRIVATE: "github.com/xurrent/*"
         run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
