@@ -1,0 +1,22 @@
+# Local secrets — never commit
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Build artifacts
+/xurrent-mcp
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Test cache
+.test-results/

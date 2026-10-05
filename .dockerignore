@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.githooks
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*.code-workspace
+
+# Docs (keep lightweight in image)
+docs/article
+
+# Scripts (not needed at runtime)
+scripts
+
+# Test artifacts
+.test-results
+
+# Build artifacts
+dist
+xurrent-mcp

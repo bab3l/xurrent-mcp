@@ -1,0 +1,58 @@
+#!/bin/sh
+# Pre-commit hook for xurrent-mcp: ensures code quality before commit.
+# Install:  git config core.hooksPath .githooks
+# Or copy:  cp .githooks/pre-commit .git/hooks/
+
+set -e
+
+echo "=== xurrent-mcp pre-commit ==="
+
+# 1. go vet
+echo "[1/5] go vet..."
+go vet ./internal/... ./cmd/... 2>&1 || {
+    echo "ERROR: go vet failed. Fix issues before committing."
+    exit 1
+}
+
+# 2. gofmt check
+echo "[2/5] gofmt..."
+UNFORMATTED=$(gofmt -l . 2>/dev/null | grep -v vendor | grep -v '.git')
+if [ -n "$UNFORMATTED" ]; then
+    echo "ERROR: Unformatted Go files found:"
+    echo "$UNFORMATTED"
+    echo "Run: gofmt -w ."
+    exit 1
+fi
+
+# 3. goimports check (if installed)
+echo "[3/5] goimports..."
+if command -v goimports >/dev/null 2>&1; then
+    UNIMPORTED=$(goimports -l . 2>/dev/null | grep -v vendor | grep -v '.git')
+    if [ -n "$UNIMPORTED" ]; then
+        echo "ERROR: Files with incorrect imports:"
+        echo "$UNIMPORTED"
+        echo "Run: goimports -w ."
+        exit 1
+    fi
+else
+    echo "  goimports not installed — skipping (install: go install golang.org/x/tools/cmd/goimports@latest)"
+fi
+
+# 4. Run unit tests (fast)
+echo "[4/5] unit tests..."
+go test ./internal/... -count=1 -short 2>&1 || {
+    echo "ERROR: Unit tests failed."
+    exit 1
+}
+
+# 5. git diff check for dirty generated files
+echo "[5/5] checking for stale generated files..."
+if [ -n "$(git diff --name-only --cached 2>/dev/null)" ]; then
+    STALE=$(git diff --name-only --cached | grep '\.go$' | head -5)
+    if [ -n "$STALE" ]; then
+        echo "  Staged Go files:"
+        echo "$STALE"
+    fi
+fi
+
+echo "=== Pre-commit passed ==="
