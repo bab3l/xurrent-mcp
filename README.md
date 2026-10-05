@@ -17,7 +17,7 @@ docker run -d \
   -e XURRENT_ALLOW_MUTATIONS=0 \
   -p 8080:8080 \
   --name xurrent-mcp \
-  ghcr.io/xurrent/xurrent-mcp:latest
+  ghcr.io/bab3l/xurrent-mcp:latest
 ```
 
 #### Docker Compose
@@ -25,7 +25,7 @@ docker run -d \
 ```yaml
 services:
   xurrent-mcp:
-    image: ghcr.io/xurrent/xurrent-mcp:latest
+    image: ghcr.io/bab3l/xurrent-mcp:latest
     ports:
       - "8080:8080"
     environment:
@@ -78,7 +78,7 @@ In `claude_desktop_config.json`:
         "-e", "XURRENT_ACCOUNT",
         "-e", "XURRENT_ALLOW_MUTATIONS",
         "-e", "XURRENT_HTTP_MIN_INTERVAL",
-        "ghcr.io/xurrent/xurrent-mcp:latest"
+        "ghcr.io/bab3l/xurrent-mcp:latest"
       ],
       "env": {
         "XURRENT_TOKEN": "your-personal-access-token",
