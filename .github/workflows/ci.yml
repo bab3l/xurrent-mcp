@@ -33,6 +33,7 @@ jobs:
           GONOSUMDB: '*'
           GONOSUMCHECK: '*'
           GOPRIVATE: 'github.com/xurrent/*'
+          GOVCS: '*:off'
         run: |
           git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
           go mod download
@@ -44,6 +45,7 @@ jobs:
           GONOSUMDB: '*'
           GONOSUMCHECK: '*'
           GOPRIVATE: 'github.com/xurrent/*'
+          GOVCS: '*:off'
         run: go test ./internal/... -count=1 -short -v
       - name: MCP harness tests
         working-directory: xurrent-mcp
@@ -52,6 +54,7 @@ jobs:
           GONOSUMDB: '*'
           GONOSUMCHECK: '*'
           GOPRIVATE: 'github.com/xurrent/*'
+          GOVCS: '*:off'
         run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
