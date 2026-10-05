@@ -13,11 +13,14 @@ WORKDIR /src
 COPY go-xurrent/go.mod go-xurrent/go.sum go-xurrent/
 COPY go-xurrent/ go-xurrent/
 COPY xurrent-mcp/go.mod xurrent-mcp/go.sum xurrent-mcp/
+ENV GOPRIVATE=github.com/xurrent/*
+ENV GONOSUMDB=*
+ENV GONOSUMCHECK=*
 RUN cd xurrent-mcp && go mod download
 
 COPY xurrent-mcp/ xurrent-mcp/
 
-RUN cd xurrent-mcp && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+RUN cd xurrent-mcp && GOPRIVATE=github.com/xurrent/* GONOSUMDB=* GONOSUMCHECK=* CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -trimpath -ldflags="-s -w" \
     -o /xurrent-mcp ./cmd/xurrent-mcp
 

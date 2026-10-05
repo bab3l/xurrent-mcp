@@ -8,28 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout xurrent-mcp
-        uses: actions/checkout@v4
-        with:
-          path: xurrent-mcp
-      - name: Checkout go-xurrent
-        uses: actions/checkout@v4
-        with:
-          repository: bab3l/go-xurrent
-          path: go-xurrent
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.26"
-          cache-dependency-path: xurrent-mcp/go.sum
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: xurrent-mcp
-          version: v1.64
-
   test:
     runs-on: ubuntu-latest
     # needs: lint — temporarily disabled; golangci-lint action needs Go 1.26 support
@@ -47,21 +25,30 @@ jobs:
         with:
           go-version: "1.26"
           cache-dependency-path: xurrent-mcp/go.sum
+      - name: Resolve modules
+        working-directory: xurrent-mcp
+        env:
+          GOFLAGS: -mod=mod
+          GONOSUMDB: '*'
+          GONOSUMCHECK: '*'
+          GOPRIVATE: 'github.com/xurrent/*'
+        run: go mod download
+
       - name: Unit tests
         working-directory: xurrent-mcp
         env:
           GOFLAGS: -mod=mod
-          GONOSUMDB: "*"
-          GONOSUMCHECK: "*"
-          GOPRIVATE: "github.com/xurrent/*"
+          GONOSUMDB: '*'
+          GONOSUMCHECK: '*'
+          GOPRIVATE: 'github.com/xurrent/*'
         run: go test ./internal/... -count=1 -short -v
       - name: MCP harness tests
         working-directory: xurrent-mcp
         env:
           GOFLAGS: -mod=mod
-          GONOSUMDB: "*"
-          GONOSUMCHECK: "*"
-          GOPRIVATE: "github.com/xurrent/*"
+          GONOSUMDB: '*'
+          GONOSUMCHECK: '*'
+          GOPRIVATE: 'github.com/xurrent/*'
         run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
@@ -82,6 +69,11 @@ jobs:
           go-version: "1.26"
       - name: Build binary
         working-directory: xurrent-mcp
+        env:
+          GOFLAGS: -mod=mod
+          GONOSUMDB: '*'
+          GONOSUMCHECK: '*'
+          GOPRIVATE: 'github.com/xurrent/*'
         run: go build -trimpath -o xurrent-mcp ./cmd/xurrent-mcp
 
   docker:
