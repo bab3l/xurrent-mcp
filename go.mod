@@ -3,7 +3,7 @@ module github.com/xurrent/xurrent-mcp
 go 1.26.0
 
 require (
-	github.com/bab3l/go-xurrent v0.0.0-20261005090652-276d6d6e9c23
+	github.com/bab3l/go-xurrent v0.0.0-20261005091847-6d1242705767
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
@@ -41,4 +41,5 @@ require (
 	google.golang.org/grpc v1.83.2 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
+
 replace github.com/bab3l/go-xurrent => ../go-xurrent
