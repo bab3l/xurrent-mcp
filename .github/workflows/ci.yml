@@ -29,10 +29,11 @@ jobs:
       - name: Setup workspace
         run: |
           # Create Go workspace to resolve go-xurrent locally without replace.
-          go work init ./xurrent-mcp
+          go work init
+          go work use ./xurrent-mcp
           go work use ./go-xurrent
           # Remove the replace directive — workspace handles resolution.
-          sed -i '/replace github.com\/xurrent\/go-xurrent/d' xurrent-mcp/go.mod
+          sed -i '/^replace github.com\/xurrent\/go-xurrent => .*/d' xurrent-mcp/go.mod
 
       - name: Unit tests
         working-directory: xurrent-mcp
