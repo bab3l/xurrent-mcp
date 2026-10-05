@@ -28,27 +28,16 @@ jobs:
           cache-dependency-path: xurrent-mcp/go.sum
       - name: Resolve modules
         working-directory: xurrent-mcp
-        env:
-          GOFLAGS: -mod=mod
         run: |
-          MODCACHE=$(go env GOMODCACHE)
-          mkdir -p "$MODCACHE/github.com/xurrent/go-xurrent@v0.0.0"
-          cp -r ../go-xurrent/* "$MODCACHE/github.com/xurrent/go-xurrent@v0.0.0/"
-          # Create a minimal go.mod for the cached copy
-          cd "$MODCACHE/github.com/xurrent/go-xurrent@v0.0.0"
-          [ -f go.mod ] || go mod init github.com/xurrent/go-xurrent
-          cd -
+          mv ../go-xurrent ./go-xurrent
+          sed -i 's|replace github.com/xurrent/go-xurrent => ../go-xurrent|replace github.com/xurrent/go-xurrent => ./go-xurrent|' go.mod
           go mod download
 
       - name: Unit tests
         working-directory: xurrent-mcp
-        env:
-          GOFLAGS: -mod=mod
         run: go test ./internal/... -count=1 -short -v
       - name: MCP harness tests
         working-directory: xurrent-mcp
-        env:
-          GOFLAGS: -mod=mod
         run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
