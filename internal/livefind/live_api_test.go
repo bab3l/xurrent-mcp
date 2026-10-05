@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/xurrent/go-xurrent/pkg/collisionhints"
+	"github.com/bab3l/go-xurrent/pkg/collisionhints"
 )
 
 // TestLive_Search_teamName hits the real API when XURRENT_TOKEN and XURRENT_ACCOUNT are set.

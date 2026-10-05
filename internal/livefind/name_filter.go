@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	openapiclient "github.com/xurrent/go-xurrent"
+	openapiclient "github.com/bab3l/go-xurrent"
 )
 
 // tryNameFilterPages lists collection path with server-side name= (filtering docs) plus

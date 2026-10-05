@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	openapiclient "github.com/xurrent/go-xurrent"
+	openapiclient "github.com/bab3l/go-xurrent"
 )
 
 func searchCISerial(ctx context.Context, client *openapiclient.APIClient, value string, res *Result) error {

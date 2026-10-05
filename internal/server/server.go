@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	openapiclient "github.com/xurrent/go-xurrent"
+	openapiclient "github.com/bab3l/go-xurrent"
 
 	"github.com/xurrent/xurrent-mcp/internal/client"
 	"github.com/xurrent/xurrent-mcp/internal/middleware"

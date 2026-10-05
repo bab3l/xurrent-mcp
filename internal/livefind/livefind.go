@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	openapiclient "github.com/xurrent/go-xurrent"
-	"github.com/xurrent/go-xurrent/pkg/collisionhints"
+	openapiclient "github.com/bab3l/go-xurrent"
+	"github.com/bab3l/go-xurrent/pkg/collisionhints"
 )
 
 const listPageSize int32 = 100

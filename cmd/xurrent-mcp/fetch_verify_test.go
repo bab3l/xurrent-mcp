@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	openapiclient "github.com/xurrent/go-xurrent"
+	openapiclient "github.com/bab3l/go-xurrent"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/require"
 )

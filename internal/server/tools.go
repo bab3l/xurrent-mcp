@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/xurrent/go-xurrent/pkg/collisionhints"
+	"github.com/bab3l/go-xurrent/pkg/collisionhints"
 
 	"github.com/xurrent/xurrent-mcp/internal/livefind"
 	"github.com/xurrent/xurrent-mcp/internal/tools"

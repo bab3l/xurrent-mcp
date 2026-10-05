@@ -27,26 +27,18 @@ jobs:
           go-version: "1.26"
           cache-dependency-path: xurrent-mcp/go.sum
 
-      # Test packages that don't depend on go-xurrent/pkg/collisionhints.
-      # livefind and server depend on that sub-package, which Go 1.26
-      # validates via git ls-remote even with replace directives.
-      # These pass locally and in the Docker build.
+      - name: Setup workspace
+        run: |
+          # Move go-xurrent under xurrent-mcp so replace resolves locally.
+          mv go-xurrent xurrent-mcp/go-xurrent
+          sed -i 's|replace github.com/bab3l/go-xurrent => ../go-xurrent|replace github.com/bab3l/go-xurrent => ./go-xurrent|' xurrent-mcp/go.mod
+
       - name: Unit tests
         working-directory: xurrent-mcp
-        env:
-          GOFLAGS: -mod=mod
-          GONOSUMDB: '*'
-          GONOSUMCHECK: '*'
-          GOPRIVATE: 'github.com/xurrent/*'
-        run: go test ./internal/client/... ./internal/middleware/... ./internal/otel/... ./internal/tools/... -count=1 -short -v
+        run: go test ./internal/... -count=1 -short -v
 
       - name: MCP harness tests
         working-directory: xurrent-mcp
-        env:
-          GOFLAGS: -mod=mod
-          GONOSUMDB: '*'
-          GONOSUMCHECK: '*'
-          GOPRIVATE: 'github.com/xurrent/*'
         run: go test -run TestHarness -count=1 -v ./cmd/xurrent-mcp/
 
   build:
