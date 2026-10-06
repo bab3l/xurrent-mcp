@@ -685,6 +685,24 @@ var EntityRegistry = map[string]EntityDef{
 		SortableFields:  []string{"id"},
 		Priority: 1,
 	},
+	"entity_audit": {
+		Path: "/v1/{parent_type}/{parent_id}/audit", Name: "Entity Audit", Plural: "entity_audits",
+		Description: "Audit trail for any entity type. Provide parent_type (e.g. people, teams, services, workflows) and parent_id. Covers all 25+ entity types that support audit: people, teams, services, service_instances, service_offerings, slas, sites, organizations, problems, tasks, workflows, calendars, products, product_categories, cis, custom_collections, projects, project_tasks, risks, surveys, ui_extensions, webhooks, workflow_templates, task_templates, request_templates, effort_classes, and more.",
+		DocURL:  "https://developer.xurrent.com/v1/audit_entries/",
+		Methods: []string{"GET"},
+		Fields: []FieldDef{
+			{Name: "id", Type: "integer", Description: "Unique ID", ReadOnly: true},
+			{Name: "action", Type: "string", Description: "Action: create, update, destroy, info", ReadOnly: true},
+			{Name: "created_at", Type: "datetime", Description: "When the action occurred", ReadOnly: true},
+			{Name: "created_by", Type: "reference", Description: "Person who performed the action", ReadOnly: true},
+			{Name: "user", Type: "reference", Description: "Person whose session was used", ReadOnly: true},
+			{Name: "changes", Type: "text", Description: "JSON describing what changed (single GET)", ReadOnly: true},
+		},
+		DefaultFields:   []string{"id", "action", "created_at"},
+		FilterableFields: []string{"id"},
+		SortableFields:  []string{"id"},
+		Priority: 1,
+	},
 	"webhook": {
 		Path: "/v1/webhooks", Name: "Webhook", Plural: "webhooks",
 		Description: "Webhook event subscriptions for real-time notifications.",
@@ -791,6 +809,9 @@ func LookupEntity(name string) (EntityDef, bool) {
 		"automation_rule_audits":      "automation_rule_audit",
 		"automation_rule_audit":       "automation_rule_audit",
 		"automation rule audit":       "automation_rule_audit",
+		"entity_audits":               "entity_audit",
+		"entityaudit":                 "entity_audit",
+		"entity audit":                "entity_audit",
 		"webhooks":                    "webhook",
 	}
 
