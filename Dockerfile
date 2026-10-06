@@ -42,7 +42,7 @@ ENV XURRENT_TOOL_JSON_COMPACT=1
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost:8080/healthz || exit 1
+    CMD wget -qO- http://localhost:8080/health || exit 1
 
 COPY --from=builder /xurrent-mcp /usr/local/bin/xurrent-mcp
 

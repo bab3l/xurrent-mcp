@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -146,11 +148,11 @@ func (s *Server) runHTTP(ctx context.Context) error {
 
 	mux := http.NewServeMux()
 	mux.Handle("/mcp", handler)
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
-	})
+
+	// /health — lightweight liveness check (no API call).
+	mux.HandleFunc("/health", s.handleHealthLiveness)
+	// /healthz — full readiness check (verifies token viability against Xurrent API).
+	mux.HandleFunc("/healthz", s.handleHealthReadiness)
 
 	addr := HTTPAddr()
 	s.Logger.Info("HTTP server listening", "addr", addr)
@@ -175,4 +177,90 @@ func (s *Server) requireClient() (*openapiclient.APIClient, error) {
 			"For HTTP clients: include Authorization: Bearer <token> and X-Xurrent-Account: <account> headers.")
 	}
 	return s.APIClient, nil
+}
+
+// handleHealthLiveness returns 200 as long as the process is alive.
+func (s *Server) handleHealthLiveness(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status":"ok","uptime":"live"}`))
+}
+
+// handleHealthReadiness verifies the Xurrent API is reachable and the token is viable.
+// It calls GET /v1/me — the cheapest authenticated endpoint. Returns 200 on success,
+// 503 when the API call fails (token invalid, network down, rate limited), with
+// diagnostic detail in the response body.
+func (s *Server) handleHealthReadiness(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Check 1: Is the API client configured?
+	hasClient := s.APIClient != nil
+	hasToken := strings.TrimSpace(os.Getenv("XURRENT_TOKEN")) != ""
+	hasAccount := strings.TrimSpace(os.Getenv("XURRENT_ACCOUNT")) != ""
+
+	// Check 2: If configured, verify token viability via /v1/me.
+	if hasClient {
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		body, resp, err := s.APIClient.GetCollectionJSON(ctx, "/v1/me", url.Values{})
+
+		if err != nil {
+			s.Logger.Warn("health check: API unreachable", "error", err)
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = fmt.Fprintf(w, `{"status":"unhealthy","reason":"api_unreachable","error":%q}`+"\n", err.Error())
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			statusStr := "token_invalid"
+			if resp.StatusCode == 429 {
+				statusStr = "rate_limited"
+			}
+			errBody := string(body)
+			if len(errBody) > 200 {
+				errBody = errBody[:200]
+			}
+			s.Logger.Warn("health check: token rejected", "status", resp.StatusCode)
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = fmt.Fprintf(w, `{"status":"unhealthy","reason":%q,"http_status":%d,"detail":%q}`+"\n",
+				statusStr, resp.StatusCode, errBody)
+			return
+		}
+
+		// Parse the response to extract identity.
+		var me map[string]any
+		personName := "unknown"
+		personEmail := "unknown"
+		if json.Unmarshal(body, &me) == nil {
+			if n, ok := me["name"].(string); ok {
+				personName = n
+			}
+			if e, ok := me["primary_email"].(string); ok {
+				personEmail = e
+			}
+		}
+
+		// Check 3: Rate limit headers (informational).
+		limit := resp.Header.Get("X-Ratelimit-Limit")
+		remaining := resp.Header.Get("X-Ratelimit-Remaining")
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(w, `{"status":"ok","authenticated":true,"account":%q,"person":%q,"email":%q,"rate_limit":{"limit":%q,"remaining":%q}}`+"\n",
+			s.Config.Account, personName, personEmail, limit, remaining)
+		return
+	}
+
+	// No client configured — report what's missing.
+	reasons := []string{}
+	if !hasToken {
+		reasons = append(reasons, "missing XURRENT_TOKEN")
+	}
+	if !hasAccount {
+		reasons = append(reasons, "missing XURRENT_ACCOUNT")
+	}
+	s.Logger.Warn("health check: no API client configured", "reasons", reasons)
+	w.WriteHeader(http.StatusServiceUnavailable)
+	_, _ = fmt.Fprintf(w, `{"status":"unhealthy","reason":"not_configured","missing":%q}`+"\n", reasons)
 }

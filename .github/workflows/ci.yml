@@ -95,5 +95,6 @@ jobs:
         run: |
           docker run --rm -d --name mcp-test -p 18080:8080 xurrent-mcp:ci
           sleep 3
-          curl -s http://localhost:18080/healthz | grep -q '"status":"ok"' && echo "PASS: healthcheck"
+          curl -s http://localhost:18080/health | grep -q '"status":"ok"' && echo "PASS: liveness"
+          curl -s http://localhost:18080/healthz && echo "" || echo "readiness: no creds (expected for CI)"
           docker stop mcp-test
