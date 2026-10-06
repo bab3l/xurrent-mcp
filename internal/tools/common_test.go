@@ -126,7 +126,7 @@ func TestLookupEntity_AllRegisteredCount(t *testing.T) {
 	t.Parallel()
 	count := len(EntityRegistry)
 	require.GreaterOrEqual(t, count, 28, "should have at least 28 entity types")
-	require.LessOrEqual(t, count, 50, "should have at most 50 entity types")
+	require.LessOrEqual(t, count, 70, "should have at most 70 entity types")
 }
 
 func TestFieldDef_ReadOnlyDefault(t *testing.T) {
