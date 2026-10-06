@@ -1138,6 +1138,59 @@ var EntityRegistry = map[string]EntityDef{
 		SortableFields: []string{"id", "name"},
 		Priority: 2,
 	},
+	"app_instance": {
+		Path: "/v1/app_instances", Name: "App Instance", Plural: "app_instances",
+		Description: "Deployed instances of app offerings. Has automation rules and audit sub-resources.",
+		DocURL:  "https://developer.xurrent.com/v1/app_instances/",
+		Methods: []string{"GET", "POST", "PATCH"},
+		Fields: []FieldDef{
+			{Name: "id", Type: "integer", Description: "Instance ID", ReadOnly: true},
+			{Name: "name", Type: "string", Description: "Instance name"},
+		},
+		DefaultFields: []string{"id", "name"},
+		SortableFields: []string{"id", "name"},
+		Priority: 2,
+	},
+	"app_offering_automation_rule": {
+		Path: "/v1/app_offering_automation_rules", Name: "App Offering Automation Rule", Plural: "app_offering_automation_rules",
+		Description: "Automation rules scoped to app offerings.",
+		DocURL:  "https://developer.xurrent.com/v1/app_offering_automation_rules/",
+		Methods: []string{"GET", "POST", "PATCH"},
+		Fields: []FieldDef{
+			{Name: "id", Type: "integer", Description: "Rule ID", ReadOnly: true},
+			{Name: "name", Type: "string", Description: "Rule name"},
+		},
+		DefaultFields: []string{"id", "name"},
+		SortableFields: []string{"id", "name"},
+		Priority: 2,
+	},
+	"risk": {
+		Path: "/v1/risks", Name: "Risk", Plural: "risks",
+		Description: "Risk records for projects, services, and organizations. Has notes and references sub-resources.",
+		DocURL:  "https://developer.xurrent.com/v1/risks/",
+		Methods: []string{"GET", "POST", "PATCH"},
+		Fields: []FieldDef{
+			{Name: "id", Type: "integer", Description: "Risk ID", ReadOnly: true},
+			{Name: "subject", Type: "string", Description: "Risk subject"},
+			{Name: "severity", Type: "string", Description: "Risk severity level"},
+			{Name: "status", Type: "string", Description: "Risk status"},
+		},
+		DefaultFields: []string{"id", "subject", "severity"},
+		SortableFields: []string{"id", "subject"},
+		Priority: 2,
+	},
+	"shop_order_line": {
+		Path: "/v1/shop_order_lines", Name: "Shop Order Line", Plural: "shop_order_lines",
+		Description: "Order line items from the service catalog shop.",
+		DocURL:  "https://developer.xurrent.com/v1/shop_order_lines/",
+		Methods: []string{"GET"},
+		Fields: []FieldDef{
+			{Name: "id", Type: "integer", Description: "Order line ID", ReadOnly: true},
+		},
+		DefaultFields: []string{"id"},
+		SortableFields: []string{"id"},
+		Priority: 2,
+	},
 
 	"rfc_type": {
 		Path: "/v1/rfc_types", Name: "RFC Type", Plural: "rfc_types",
@@ -1530,6 +1583,16 @@ func LookupEntity(name string) (EntityDef, bool) {
 		"shop_article_categories":      "shop_article_category",
 		"shoparticlecategory":          "shop_article_category",
 		"shop article category":        "shop_article_category",
+		"app_instances":               "app_instance",
+		"appinstance":                 "app_instance",
+		"app instance":                "app_instance",
+		"app_offering_automation_rules": "app_offering_automation_rule",
+		"appofferingautomationrule":   "app_offering_automation_rule",
+		"risks":                       "risk",
+		"risk":                        "risk",
+		"shop_order_lines":            "shop_order_line",
+		"shoporderline":               "shop_order_line",
+		"shop order line":             "shop_order_line",
 
 	}
 
