@@ -14,11 +14,12 @@ import (
 
 // EnvConfig holds configuration parsed from the environment.
 type EnvConfig struct {
-	Token        string
-	Account      string
-	APIBase      string
-	Language     string
+	Token          string
+	Account        string
+	APIBase        string
+	Language       string
 	AllowMutations bool
+	WebDomain      string // Xurrent web UI domain: "xurrent.com" (default) or "4me.com" (legacy)
 }
 
 // ConfigFromEnv reads the standard xurrent-mcp environment variables.
@@ -36,6 +37,7 @@ func ConfigFromEnv() (*EnvConfig, error) {
 		APIBase:        strings.TrimSpace(os.Getenv("XURRENT_API_BASE")),
 		Language:       strings.TrimSpace(os.Getenv("XURRENT_LANGUAGE")),
 		AllowMutations: strings.TrimSpace(os.Getenv("XURRENT_ALLOW_MUTATIONS")) == "1",
+		WebDomain:      webDomain(),
 	}, nil
 }
 
@@ -75,14 +77,28 @@ func (c *EnvConfig) AccountID() string {
 }
 
 // WebURL returns the base URL for the Xurrent web interface.
-// Pattern: https://{account}.xurrent.com
+// Uses XURRENT_WEB_DOMAIN if set, otherwise defaults to xurrent.com.
+// Legacy accounts should set XURRENT_WEB_DOMAIN=4me.com.
+// Pattern: https://{account}.{domain}
 func (c *EnvConfig) WebURL() string {
-	return "https://" + c.Account + ".xurrent.com"
+	domain := c.WebDomain
+	if domain == "" {
+		domain = "xurrent.com"
+	}
+	return "https://" + c.Account + "." + domain
 }
 
 // Link returns a clickable link to a specific entity in the Xurrent web UI.
-// For top-level entities like teams, the path is the entity plural (e.g. "teams").
-// For sub-resources like notes, include the parent context in the parent entity page.
 func (c *EnvConfig) Link(entityPlural string, id int64) string {
 	return fmt.Sprintf("%s/%s/%d", c.WebURL(), entityPlural, id)
+}
+
+// webDomain reads XURRENT_WEB_DOMAIN from environment, defaulting to "xurrent.com".
+// Legacy accounts on the 4me platform should set XURRENT_WEB_DOMAIN=4me.com.
+func webDomain() string {
+	d := strings.TrimSpace(os.Getenv("XURRENT_WEB_DOMAIN"))
+	if d == "" {
+		d = "xurrent.com"
+	}
+	return d
 }
