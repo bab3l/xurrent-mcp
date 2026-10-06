@@ -349,9 +349,9 @@ Look at:
 - Notes — do they show the rule firing?
 
 ### 7. Check inbound emails
-  xurrent_query entity=inbound_email fields=id,from_address,to_address,subject,received_at,status per_page=20 sort=-received_at
+  xurrent_query entity=inbound_email fields=id,from,to,subject,created_at per_page=20 sort=-created_at
 
-Compare from_address against what the automation rule expects.
+Compare the "from" address against what the automation rule expects.
 
 ### 8. Check request events for the sample ticket
 Look at the event timeline to see what actually happened:

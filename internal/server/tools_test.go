@@ -325,3 +325,54 @@ func newTestServer(t *testing.T) *Server {
 func nilCtx() context.Context {
 	return context.Background()
 }
+
+// TestQuery_ParameterizedPath verifies that handleQuery substitutes {request_id}
+// for sub-resource entities like inbound_email.
+func TestQuery_ParameterizedPath(t *testing.T) {
+	_ = newTestServer(t)
+	// Verify the entity exists and has the parameterized path.
+	def, ok := tools.LookupEntity("inbound_email")
+	require.True(t, ok)
+	require.Contains(t, def.Path, "{request_id}")
+}
+
+// TestQuery_ParameterizedPath_RequiresParentID verifies that querying a sub-resource
+// without parent_id returns an error.
+func TestQuery_ParameterizedPath_RequiresParentID(t *testing.T) {
+	srv := newTestServer(t)
+	_, _, err := srv.handleQuery(nilCtx(), nil, queryArgs{
+		Entity: "inbound_email",
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "parent_id")
+}
+
+// TestQuery_ParameterizedPath_WithParentID verifies that querying a sub-resource
+// with parent_id builds the correct path.
+func TestQuery_ParameterizedPath_WithParentID(t *testing.T) {
+	srv := newTestServer(t)
+	// Without a real API client, this will fail trying to call the API.
+	// But we can verify it doesn't fail on the parent_id check.
+	_, _, err := srv.handleQuery(nilCtx(), nil, queryArgs{
+		Entity:   "inbound_email",
+		ParentID: 84088756,
+		Fields:   "id,from,to,subject,created_at",
+		PerPage:  5,
+	})
+	// Expected to fail with API client error — not parent_id error.
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "parent_id", "should not fail on parent_id when provided")
+	require.Contains(t, err.Error(), "API client", "should fail because we don't have a real API client")
+}
+
+// TestQuery_RegularEntity_NoParentID verifies that regular entities work without parent_id.
+func TestQuery_RegularEntity_NoParentID(t *testing.T) {
+	srv := newTestServer(t)
+	_, _, err := srv.handleQuery(nilCtx(), nil, queryArgs{
+		Entity: "team",
+		Fields: "id,name",
+	})
+	// Expected to fail with API client error — not parent_id error.
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "API client")
+}

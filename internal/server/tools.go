@@ -30,6 +30,7 @@ type queryArgs struct {
 	Sort        string `json:"sort,omitempty" jsonschema:"Sort: name, -id, created_at, -updated_at."`
 	PerPage     int32  `json:"per_page,omitempty" jsonschema:"1-100, default 100."`
 	SearchAfter string `json:"search_after,omitempty" jsonschema:"Cursor from previous next_cursor for pagination."`
+	ParentID    int32  `json:"parent_id,omitempty" jsonschema:"For sub-resource entities like inbound_email or request_note, the parent record ID."`
 }
 
 type readArgs struct {
@@ -153,7 +154,16 @@ func (s *Server) handleQuery(ctx context.Context, _ *mcp.CallToolRequest, in que
 	fields, perPage := queryDefaults(in.Fields, def.DefaultFields, in.PerPage)
 	q := buildQuery(fields, perPage, in.State, in.Sort, in.Filter, in.SearchAfter)
 
-	body, resp, err := s.apiGet(ctx, def.Path, q)
+	// Handle parameterized paths for sub-resource entities (e.g., inbound_email).
+	path := def.Path
+	if strings.Contains(path, "{request_id}") {
+		if in.ParentID == 0 {
+			return nil, nil, fmt.Errorf("entity %q requires parent_id (the request ID)", in.Entity)
+		}
+		path = strings.Replace(path, "{request_id}", fmt.Sprintf("%d", in.ParentID), 1)
+	}
+
+	body, resp, err := s.apiGet(ctx, path, q)
 	if err != nil {
 		return nil, nil, err
 	}

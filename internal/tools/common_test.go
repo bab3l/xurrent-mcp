@@ -153,3 +153,62 @@ func TestEntityRegistry_DefaultFieldsExist(t *testing.T) {
 		require.True(t, found, "default field %q not defined in fields", df)
 	}
 }
+
+func TestInboundEmail_HasCorrectPath(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("inbound_email")
+	require.True(t, ok)
+	require.Equal(t, "/v1/requests/{request_id}/inbound_emails", def.Path)
+	require.Equal(t, "inbound_emails", def.Plural)
+	require.Contains(t, def.Methods, "GET")
+}
+
+func TestInboundEmail_HasCorrectFields(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("inbound_email")
+	require.True(t, ok)
+
+	// Verify the correct field names (from Xurrent API: from, to, subject, created_at, message_id, body_start, source_uri).
+	fields := map[string]bool{}
+	for _, f := range def.Fields {
+		fields[f.Name] = true
+	}
+	require.True(t, fields["from"], "should have 'from' field (not from_address)")
+	require.True(t, fields["to"], "should have 'to' field (not to_address)")
+	require.True(t, fields["created_at"], "should have 'created_at' field")
+	require.True(t, fields["message_id"], "should have 'message_id' field")
+	require.True(t, fields["body_start"], "should have 'body_start' field")
+	require.True(t, fields["source_uri"], "should have 'source_uri' field")
+	// Old incorrect field names should not exist.
+	require.False(t, fields["from_address"], "should NOT have 'from_address' (API uses 'from')")
+	require.False(t, fields["to_address"], "should NOT have 'to_address' (API uses 'to')")
+	require.False(t, fields["received_at"], "should NOT have 'received_at' (API uses 'created_at')")
+}
+
+func TestInboundEmail_DefaultFieldsMatchAvailable(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("inbound_email")
+	require.True(t, ok)
+	for _, df := range def.DefaultFields {
+		found := false
+		for _, f := range def.Fields {
+			if f.Name == df {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "default field %q not defined in fields", df)
+	}
+}
+
+func TestInboundEmail_AliasesWork(t *testing.T) {
+	t.Parallel()
+	aliases := []string{"inbound_emails", "inboundemail", "inbound email", "mail"}
+	for _, alias := range aliases {
+		t.Run(alias, func(t *testing.T) {
+			def, ok := LookupEntity(alias)
+			require.True(t, ok, "alias %q should resolve", alias)
+			require.Equal(t, "Inbound Email", def.Name)
+		})
+	}
+}
