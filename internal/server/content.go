@@ -552,3 +552,4 @@ To embed an image inline within a note:
   - upload_uri: where to POST the file
 `
 }
+

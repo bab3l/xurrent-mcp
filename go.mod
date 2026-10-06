@@ -3,7 +3,7 @@ module github.com/xurrent/xurrent-mcp
 go 1.26.0
 
 require (
-	github.com/bab3l/go-xurrent v0.0.0-20261005091847-6d1242705767
+	github.com/bab3l/go-xurrent v0.0.0-20261006054724-b9478f2edadd
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0

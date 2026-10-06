@@ -132,4 +132,16 @@ func (s *Server) registerPrompts() {
 			},
 		}, nil
 	})
+
+	s.Server.AddPrompt(&mcp.Prompt{
+		Name:        "note-writing",
+		Description: "Best practices for writing Xurrent notes: default internal, concise, use record references (<type#id>), mentions (<@id|name>), code blocks for logs, markdown links for external URLs, templates for common scenarios.",
+	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+		return &mcp.GetPromptResult{
+			Description: "Note Writing Guide",
+			Messages: []*mcp.PromptMessage{
+				{Role: "user", Content: &mcp.TextContent{Text: noteWritingPrompt()}},
+			},
+		}, nil
+	})
 }
