@@ -20,8 +20,10 @@ RUN cd xurrent-mcp && go mod download
 
 COPY xurrent-mcp/ xurrent-mcp/
 
+# Build with version injection. ARG VERSION is set by CI from the git tag.
+ARG VERSION=dev
 RUN cd xurrent-mcp && GOPRIVATE=github.com/xurrent/* GONOSUMDB=* GONOSUMCHECK=* CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -trimpath -ldflags="-s -w" \
+    go build -trimpath -ldflags="-s -w -X github.com/xurrent/xurrent-mcp/internal/server.Version=${VERSION}" \
     -o /xurrent-mcp ./cmd/xurrent-mcp
 
 # ── Stage 2: Runtime ──

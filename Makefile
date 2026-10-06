@@ -35,9 +35,11 @@ test-integration: test-unit test-harness test-fetch test-endpoint
 lint:
 	$(GOLANGCI_LINT) run ./...
 
-# Build binary
+# Build binary (injects version from VERSION env or defaults to "dev")
+VERSION ?= dev
+LDFLAGS := -s -w -X github.com/xurrent/xurrent-mcp/internal/server.Version=$(VERSION)
 build:
-	$(GO) build -trimpath -ldflags="-s -w" -o xurrent-mcp ./cmd/xurrent-mcp
+	$(GO) build -trimpath -ldflags="$(LDFLAGS)" -o xurrent-mcp ./cmd/xurrent-mcp
 
 # Docker build — run from parent directory containing both go-xurrent and xurrent-mcp
 docker:

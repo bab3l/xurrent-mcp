@@ -455,3 +455,100 @@ Returns the full audit entry including the 'changes' field which shows the exact
 | info | System action (notification sent, automation triggered, email received) |
 `
 }
+
+func pictureUploadPrompt() string {
+	return `You are helping upload a picture/icon to a Xurrent record.
+
+## Supported Entities
+The following entities support picture_uri: person, organization, service, site, team, product, product_category, custom_collection, custom_collection_element.
+
+## Two Approaches
+
+### 1. Data URL (recommended for icons and small images)
+Embed the image directly as a base64 data URL. No separate upload needed.
+
+Example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE..."
+
+Constraints:
+- Max decoded size: ~1MB (base64 adds ~33% overhead, so ~750KB raw)
+- Supported formats: image/png, image/jpeg, image/gif, image/svg+xml, image/webp
+- The server validates these before creating drafts
+
+Usage:
+  xurrent_update entity=product id=123 body={"picture_uri": "data:image/png;base64,..."}
+
+### 2. External URL
+If the image is already hosted publicly, pass the URL directly.
+
+  xurrent_update entity=organization id=456 body={"picture_uri": "https://cdn.example.com/logo.png"}
+
+To clear the picture, pass an empty string:
+  xurrent_update entity=person id=789 body={"picture_uri": ""}
+
+## For local files
+1. Read the file as base64
+2. Construct the data URL: "data:image/<type>;base64,<base64-data>"
+3. Use xurrent_update to set picture_uri
+
+The server validates:
+- File type is supported (JPEG, PNG, GIF, SVG, WebP)
+- Decoded size is under 1MB
+- Data URL format is correct
+`
+}
+
+func fileAttachmentPrompt() string {
+	return `You are helping attach files to Xurrent records.
+
+## Attachment Types by Entity
+
+Files can be attached to rich text fields on these entity types:
+- **Requests**: notes field (via note_attachments)
+- **Problems**: notes, analysis fields
+- **Tasks**: notes field
+- **Workflows**: notes field
+- **Projects**: notes field
+- **Organizations, People, Sites, Teams, Services**: remarks field (via remarks_attachments)
+
+## Three-Step Upload Process
+
+### Step 1: Get upload credentials
+  xurrent_query entity=attachment_storage fields=size_limit,allowed_extensions,upload_uri
+
+This returns an S3 or local storage endpoint with temporary credentials.
+
+### Step 2: Upload the file (manual)
+The agent cannot perform the multipart upload to S3 directly. Guide the user:
+  - Use curl with the returned form fields
+  - Save the returned 'key' value
+
+### Step 3: Attach the key to the record
+Create or update the record with the attachment key:
+
+  xurrent_create entity=request body={
+    "requested_for_id": 51,
+    "subject": "Test with attachment",
+    "category": "other",
+    "note": "See attached file",
+    "note_attachments": [{"key": "attachments/5/.../file.pdf"}]
+  }
+
+## Inline Images in Notes
+To embed an image inline within a note:
+  "note_attachments": [{"key": "...", "inline": true}]
+  "note": "Here is an image ![](attachments/5/.../image.png)"
+
+## Removing Attachments
+  xurrent_update entity=request id=123 body={
+    "note_attachments": [{"key": "attachments/5/.../file.pdf", "_destroy": true}]
+  }
+
+## Getting Storage Info
+  xurrent_query entity=attachments fields=storage
+  The /v1/attachments/storage endpoint returns:
+  - size_limit: max file size in bytes
+  - allowed_extensions: accepted file types
+  - provider: "s3" or "local"
+  - upload_uri: where to POST the file
+`
+}

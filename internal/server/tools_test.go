@@ -376,3 +376,130 @@ func TestQuery_RegularEntity_NoParentID(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "API client")
 }
+
+// ── Write protection tests ──
+
+func TestCreate_ReadOnlyEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, _, err := srv.handleCreate(nilCtx(), nil, createArgs{
+		Entity: "automation_rule", // only GET in go-xurrent
+		Body:   map[string]any{"name": "test"},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "does not support creating")
+}
+
+func TestCreate_AllowedEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, resultAny, err := srv.handleCreate(nilCtx(), nil, createArgs{
+		Entity: "team", // supports POST
+		Body:   map[string]any{"name": "test-team"},
+	})
+	// Should succeed — returns a draft, no API call needed.
+	require.NoError(t, err)
+	require.NotNil(t, resultAny)
+	result, ok := resultAny.(map[string]any)
+	require.True(t, ok)
+	draftID, ok := result["draft_id"].(string)
+	require.True(t, ok)
+	require.NotEmpty(t, draftID)
+	require.Contains(t, draftID, "draft-")
+}
+
+func TestUpdate_ReadOnlyEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, _, err := srv.handleUpdate(nilCtx(), nil, updateArgs{
+		Entity: "automation_rule",
+		ID:     1,
+		Body:   map[string]any{"name": "test"},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "does not support updating")
+}
+
+func TestUpdate_AllowedEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, resultAny, err := srv.handleUpdate(nilCtx(), nil, updateArgs{
+		Entity: "team",
+		ID:     1,
+		Body:   map[string]any{"name": "test"},
+	})
+	// Should succeed — returns a draft.
+	require.NoError(t, err)
+	require.NotNil(t, resultAny)
+	result, ok := resultAny.(map[string]any)
+	require.True(t, ok)
+	draftID, ok := result["draft_id"].(string)
+	require.True(t, ok)
+	require.NotEmpty(t, draftID)
+}
+
+func TestDelete_ReadOnlyEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, _, err := srv.handleDelete(nilCtx(), nil, deleteArgs{
+		Entity: "automation_rule",
+		ID:     1,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "does not support deleting")
+}
+
+func TestDelete_AllowedEntity(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = true
+	_, _, err := srv.handleDelete(nilCtx(), nil, deleteArgs{
+		Entity: "automation_rule",
+		ID:     1,
+	})
+	// automation_rule only has GET — should be blocked.
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "does not support deleting")
+}
+
+func TestCreate_MutationsDisabled(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = false
+	_, _, err := srv.handleCreate(nilCtx(), nil, createArgs{
+		Entity: "team",
+		Body:   map[string]any{"name": "test"},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "XURRENT_ALLOW_MUTATIONS")
+}
+
+func TestUpdate_MutationsDisabled(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = false
+	_, _, err := srv.handleUpdate(nilCtx(), nil, updateArgs{
+		Entity: "team",
+		ID:     1,
+		Body:   map[string]any{"name": "test"},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "XURRENT_ALLOW_MUTATIONS")
+}
+
+func TestDelete_MutationsDisabled(t *testing.T) {
+	srv := newTestServer(t)
+	srv.Config.AllowMutations = false
+	_, _, err := srv.handleDelete(nilCtx(), nil, deleteArgs{
+		Entity: "team",
+		ID:     1,
+	})
+	// Entity method check fires before AllowMutations check.
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "does not support deleting")
+}
+
+func TestEntityAllows_Helper(t *testing.T) {
+	require.True(t, entityAllows(tools.EntityDef{Methods: []string{"GET", "POST"}}, "POST"))
+	require.True(t, entityAllows(tools.EntityDef{Methods: []string{"GET", "POST", "PATCH"}}, "PATCH"))
+	require.False(t, entityAllows(tools.EntityDef{Methods: []string{"GET"}}, "POST"))
+	require.False(t, entityAllows(tools.EntityDef{Methods: []string{}}, "POST"))
+	require.False(t, entityAllows(tools.EntityDef{Methods: []string{"GET"}}, "DELETE"))
+}

@@ -19,6 +19,13 @@ import (
 	"github.com/xurrent/xurrent-mcp/internal/otel"
 )
 
+// Version reports the MCP server version. Set at build time via:
+//
+//	go build -ldflags="-X github.com/xurrent/xurrent-mcp/internal/server.Version=v0.3.6" ./cmd/xurrent-mcp
+//
+// Defaults to "dev" for local development.
+var Version = "dev"
+
 // Server wraps the MCP server with its dependencies.
 type Server struct {
 	Server     *mcp.Server
@@ -68,7 +75,7 @@ Without credentials, discovery/validation/collision tools still work.`,
 	}
 
 	srv := &Server{
-		Server:          mcp.NewServer(&mcp.Implementation{Name: "xurrent-mcp", Version: "0.3.0"}, opts),
+		Server:          mcp.NewServer(&mcp.Implementation{Name: "xurrent-mcp", Version: Version}, opts),
 		APIClient:       apiClient,
 		Config:          cfg,
 		Shaper:          middleware.NewResponseShaper(),

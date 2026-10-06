@@ -110,13 +110,25 @@ func (s *Server) registerPrompts() {
 	})
 
 	s.Server.AddPrompt(&mcp.Prompt{
-		Name:        "audit-trail",
-		Description: "How to use Xurrent audit entries to investigate who changed what and when. Covers top-level audit_lines, per-entity audit (request, automation rule), and using audit data for incident investigation.",
+		Name:        "picture-upload",
+		Description: "How to set picture_uri on Xurrent entities (person, organization, service, site, team, product, product_category). Covers data URLs, external URLs, format validation, and size limits.",
 	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return &mcp.GetPromptResult{
-			Description: "Audit Trail Investigation Guide",
+			Description: "Picture/Icon Upload Guide",
 			Messages: []*mcp.PromptMessage{
-				{Role: "user", Content: &mcp.TextContent{Text: auditTrailPrompt()}},
+				{Role: "user", Content: &mcp.TextContent{Text: pictureUploadPrompt()}},
+			},
+		}, nil
+	})
+
+	s.Server.AddPrompt(&mcp.Prompt{
+		Name:        "file-attachment",
+		Description: "How to attach files to Xurrent records (requests, problems, tasks, workflows). Covers the three-step S3 upload process, inline images, and attachment removal.",
+	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+		return &mcp.GetPromptResult{
+			Description: "File Attachment Guide",
+			Messages: []*mcp.PromptMessage{
+				{Role: "user", Content: &mcp.TextContent{Text: fileAttachmentPrompt()}},
 			},
 		}, nil
 	})

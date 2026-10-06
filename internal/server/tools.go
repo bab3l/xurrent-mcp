@@ -270,11 +270,15 @@ func (s *Server) handleCreate(_ context.Context, _ *mcp.CallToolRequest, in crea
 	if !ok {
 		return nil, nil, fmt.Errorf("unknown entity %q", in.Entity)
 	}
-	if !s.Config.AllowMutations {
-		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1")
-	}
 	if def.Path == "" {
 		return nil, nil, fmt.Errorf("entity %q has no API endpoint — it is a sub-resource managed through its parent entity", in.Entity)
+	}
+	// Enforce entity method restrictions.
+	if !entityAllows(def, "POST") {
+		return nil, nil, fmt.Errorf("entity %q does not support creating records (methods: %v)", in.Entity, def.Methods)
+	}
+	if !s.Config.AllowMutations {
+		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1 — set the environment variable or use force=true with appropriate credentials")
 	}
 
 	// Build path — sub-resource entities use parent_id.
@@ -286,6 +290,16 @@ func (s *Server) handleCreate(_ context.Context, _ *mcp.CallToolRequest, in crea
 		path = strings.Replace(path, "{request_id}", fmt.Sprintf("%d", in.ParentID), 1)
 	}
 	bodyBytes, _ := json.Marshal(in.Body)
+
+	// Validate picture_uri if present.
+	if bodyMap, ok := in.Body.(map[string]any); ok {
+		if pic, ok := bodyMap["picture_uri"].(string); ok {
+			if err := validatePictureURI(pic); err != nil {
+				return nil, nil, fmt.Errorf("picture_uri: %w", err)
+			}
+		}
+	}
+
 	summary := fmt.Sprintf("POST %s — CREATE %s", path, def.Name)
 
 	if in.Force {
@@ -304,14 +318,27 @@ func (s *Server) handleUpdate(_ context.Context, _ *mcp.CallToolRequest, in upda
 	if !ok {
 		return nil, nil, fmt.Errorf("unknown entity %q", in.Entity)
 	}
-	if !s.Config.AllowMutations {
-		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1")
-	}
 	if def.Path == "" {
 		return nil, nil, fmt.Errorf("entity %q has no API endpoint", in.Entity)
 	}
+	if !entityAllows(def, "PATCH") {
+		return nil, nil, fmt.Errorf("entity %q does not support updating records (methods: %v)", in.Entity, def.Methods)
+	}
+	if !s.Config.AllowMutations {
+		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1")
+	}
 	path := fmt.Sprintf("%s/%d", def.Path, in.ID)
 	bodyBytes, _ := json.Marshal(in.Body)
+
+	// Validate picture_uri if present.
+	if bodyMap, ok := in.Body.(map[string]any); ok {
+		if pic, ok := bodyMap["picture_uri"].(string); ok {
+			if err := validatePictureURI(pic); err != nil {
+				return nil, nil, fmt.Errorf("picture_uri: %w", err)
+			}
+		}
+	}
+
 	summary := fmt.Sprintf("PATCH %s — UPDATE %s #%d", path, def.Name, in.ID)
 
 	if in.Force {
@@ -330,11 +357,14 @@ func (s *Server) handleDelete(_ context.Context, _ *mcp.CallToolRequest, in dele
 	if !ok {
 		return nil, nil, fmt.Errorf("unknown entity %q", in.Entity)
 	}
-	if !s.Config.AllowMutations {
-		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1")
-	}
 	if def.Path == "" {
 		return nil, nil, fmt.Errorf("entity %q has no API endpoint", in.Entity)
+	}
+	if !entityAllows(def, "DELETE") {
+		return nil, nil, fmt.Errorf("entity %q does not support deleting records (methods: %v)", in.Entity, def.Methods)
+	}
+	if !s.Config.AllowMutations {
+		return nil, nil, fmt.Errorf("mutations require XURRENT_ALLOW_MUTATIONS=1 — set the environment variable or use force=true with appropriate credentials")
 	}
 	path := fmt.Sprintf("%s/%d", def.Path, in.ID)
 	summary := fmt.Sprintf("DELETE %s — DESTROY %s #%d", path, def.Name, in.ID)
@@ -525,4 +555,14 @@ func idToInt64(v interface{}) int64 {
 		return int64(n)
 	}
 	return 0
+}
+
+// entityAllows checks whether an entity definition includes the given HTTP method.
+func entityAllows(def tools.EntityDef, method string) bool {
+	for _, m := range def.Methods {
+		if m == method {
+			return true
+		}
+	}
+	return false
 }
