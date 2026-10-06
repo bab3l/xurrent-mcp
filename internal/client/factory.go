@@ -73,3 +73,16 @@ func NewAPIClient(cfg *EnvConfig) (*openapiclient.APIClient, error) {
 func (c *EnvConfig) AccountID() string {
 	return c.Account
 }
+
+// WebURL returns the base URL for the Xurrent web interface.
+// Pattern: https://{account}.xurrent.com
+func (c *EnvConfig) WebURL() string {
+	return "https://" + c.Account + ".xurrent.com"
+}
+
+// Link returns a clickable link to a specific entity in the Xurrent web UI.
+// For top-level entities like teams, the path is the entity plural (e.g. "teams").
+// For sub-resources like notes, include the parent context in the parent entity page.
+func (c *EnvConfig) Link(entityPlural string, id int64) string {
+	return fmt.Sprintf("%s/%s/%d", c.WebURL(), entityPlural, id)
+}

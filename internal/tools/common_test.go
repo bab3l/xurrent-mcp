@@ -126,7 +126,7 @@ func TestLookupEntity_AllRegisteredCount(t *testing.T) {
 	t.Parallel()
 	count := len(EntityRegistry)
 	require.GreaterOrEqual(t, count, 28, "should have at least 28 entity types")
-	require.LessOrEqual(t, count, 40, "should have at most 40 entity types")
+	require.LessOrEqual(t, count, 50, "should have at most 50 entity types")
 }
 
 func TestFieldDef_ReadOnlyDefault(t *testing.T) {
@@ -254,20 +254,12 @@ func TestAuditLine_AliasesWork(t *testing.T) {
 	}
 }
 
-func TestRequestAudit_HasParameterizedPath(t *testing.T) {
+func TestEntityAudit_HasParameterizedPath(t *testing.T) {
 	t.Parallel()
-	def, ok := LookupEntity("request_audit")
+	def, ok := LookupEntity("entity_audit")
 	require.True(t, ok)
-	require.Equal(t, "/v1/requests/{request_id}/audit", def.Path)
-	require.Equal(t, "request_audits", def.Plural)
-}
-
-func TestAutomationRuleAudit_HasParameterizedPath(t *testing.T) {
-	t.Parallel()
-	def, ok := LookupEntity("automation_rule_audit")
-	require.True(t, ok)
-	require.Equal(t, "/v1/automation_rules/{automation_rule_id}/audit", def.Path)
-	require.Equal(t, "automation_rule_audits", def.Plural)
+	require.Equal(t, "/v1/{parent_type}/{parent_id}/audit", def.Path)
+	require.Equal(t, "entity_audits", def.Plural)
 }
 
 func TestAuditLine_AllFieldsHaveCorrectNames(t *testing.T) {

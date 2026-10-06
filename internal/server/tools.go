@@ -165,6 +165,7 @@ func (s *Server) handleQuery(ctx context.Context, _ *mcp.CallToolRequest, in que
 		path = strings.Replace(path, "{parent_id}", fmt.Sprintf("%d", in.ParentID), 1)
 		path = strings.Replace(path, "{request_id}", fmt.Sprintf("%d", in.ParentID), 1)
 		path = strings.Replace(path, "{automation_rule_id}", fmt.Sprintf("%d", in.ParentID), 1)
+		path = strings.Replace(path, "{team_id}", fmt.Sprintf("%d", in.ParentID), 1)
 	}
 
 	body, resp, err := s.apiGet(ctx, path, q)
@@ -177,6 +178,14 @@ func (s *Server) handleQuery(ctx context.Context, _ *mcp.CallToolRequest, in que
 		return nil, nil, fmt.Errorf("%s: %w", def.Path, err)
 	}
 
+	// Build clickable web links for each row.
+	links := make([]string, len(rows))
+	for i, row := range rows {
+		if id, ok := row["id"]; ok {
+			links[i] = s.Config.Link(def.Plural, idToInt64(id))
+		}
+	}
+
 	return nil, map[string]any{
 		"entity":      in.Entity,
 		"rows":        rows,
@@ -184,6 +193,8 @@ func (s *Server) handleQuery(ctx context.Context, _ *mcp.CallToolRequest, in que
 		"fields":      strings.Split(fields, ","),
 		"per_page":    perPage,
 		"next_cursor": extractSearchAfter(resp),
+		"_links":      links,
+		"_web_url":    s.Config.WebURL(),
 	}, nil
 }
 
@@ -209,7 +220,13 @@ func (s *Server) handleRead(ctx context.Context, _ *mcp.CallToolRequest, in read
 		return nil, nil, fmt.Errorf("%s: %w", path, err)
 	}
 
-	return nil, map[string]any{"entity": in.Entity, "id": in.ID, "data": result}, nil
+	return nil, map[string]any{
+		"entity":  in.Entity,
+		"id":      in.ID,
+		"data":    result,
+		"_link":   s.Config.Link(def.Plural, int64(in.ID)),
+		"_web_url": s.Config.WebURL(),
+	}, nil
 }
 
 func (s *Server) handleSearch(ctx context.Context, _ *mcp.CallToolRequest, in searchArgs) (*mcp.CallToolResult, any, error) {
@@ -495,4 +512,17 @@ func extractSearchAfter(resp *http.Response) string {
 		}
 	}
 	return ""
+}
+
+// idToInt64 converts an ID value (float64 from JSON or int64) to int64.
+func idToInt64(v interface{}) int64 {
+	switch n := v.(type) {
+	case float64:
+		return int64(n)
+	case int64:
+		return n
+	case int:
+		return int64(n)
+	}
+	return 0
 }
