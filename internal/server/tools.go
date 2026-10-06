@@ -154,13 +154,15 @@ func (s *Server) handleQuery(ctx context.Context, _ *mcp.CallToolRequest, in que
 	fields, perPage := queryDefaults(in.Fields, def.DefaultFields, in.PerPage)
 	q := buildQuery(fields, perPage, in.State, in.Sort, in.Filter, in.SearchAfter)
 
-	// Handle parameterized paths for sub-resource entities (e.g., inbound_email).
+	// Handle parameterized paths for sub-resource entities (e.g., inbound_email, request_audit).
 	path := def.Path
-	if strings.Contains(path, "{request_id}") {
+	if strings.Contains(path, "{") {
 		if in.ParentID == 0 {
-			return nil, nil, fmt.Errorf("entity %q requires parent_id (the request ID)", in.Entity)
+			return nil, nil, fmt.Errorf("entity %q requires parent_id", in.Entity)
 		}
+		// Substitute all known parent-id placeholders.
 		path = strings.Replace(path, "{request_id}", fmt.Sprintf("%d", in.ParentID), 1)
+		path = strings.Replace(path, "{automation_rule_id}", fmt.Sprintf("%d", in.ParentID), 1)
 	}
 
 	body, resp, err := s.apiGet(ctx, path, q)

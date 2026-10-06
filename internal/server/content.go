@@ -359,9 +359,14 @@ Look at the event timeline to see what actually happened:
   xurrent_query entity=event fields=id,event,created_at per_page=20 sort=-created_at
 
 ### 9. Check audit entries for the automation rule
-  xurrent_query entity=audit_entry filter=auditable_type=automation_rule fields=id,auditable_id,action,created_at sort=-created_at
+  xurrent_query entity=automation_rule_audit parent_id=<rule-id> fields=id,action,created_at,changes per_page=20 sort=-id
+  
+This shows who changed the rule, when, and what they changed.
 
-This shows if anyone changed the rule recently.
+### 10. Check request audit trail
+  xurrent_query entity=request_audit parent_id=<sample-request-id> fields=id,action,created_at,created_by per_page=20 sort=-id
+
+This shows the full timeline of actions on the request, including automation rule triggers and notifications.
 
 ## Common Causes
 
@@ -380,5 +385,73 @@ Once root cause is identified:
 - If from-address changed: update the rule's expressions
 - If condition doesn't match: update the condition
 - Consider adding a note to affected tickets explaining the investigation
+`
+}
+
+func auditTrailPrompt() string {
+	return `You are investigating changes in Xurrent using the audit trail.
+
+## Available Audit Tools
+
+### 1. Top-level Audit Lines (all entities)
+xurrent_query entity=audit_line fields=id,action,audited,created_at per_page=50 sort=-id
+
+This returns audit entries for all entity types in the account. Useful for:
+- Finding recent changes across all entities
+- Identifying who made a change
+- Tracing system-level changes (action: info)
+
+### 2. Per-Request Audit Trail
+xurrent_query entity=request_audit parent_id=<request-id> fields=id,action,created_at,created_by per_page=50 sort=-id
+
+Shows the complete timeline of a request:
+- action: create — when the request was created
+- action: update — field changes (check the 'changes' field for details)
+- action: info — system actions like automation triggers, notifications sent
+- created_by: Person — who performed the action (null for system actions)
+
+### 3. Per-Automation Rule Audit
+xurrent_query entity=automation_rule_audit parent_id=<rule-id> fields=id,action,created_at,created_by per_page=50 sort=-id
+
+Shows when the rule was:
+- Created (action: create)
+- Modified (action: update — check changes for what was changed)
+- Disabled/enabled (action: update with changes showing disabled field)
+
+### 4. Single Audit Entry Detail
+xurrent_read entity=audit_line id=<audit-id>
+
+Returns the full audit entry including the 'changes' field which shows the exact before/after values.
+
+## Investigation Patterns
+
+### "Who changed this automation rule?"
+1. xurrent_query entity=automation_rule_audit parent_id=<rule-id> sort=-id per_page=10
+2. Look for action=update entries
+3. For each update, xurrent_read entity=audit_line id=<audit-id> to see the changes field
+
+### "What happened to this request?"
+1. xurrent_query entity=request_audit parent_id=<request-id> sort=-id per_page=30
+2. Look at the chronological sequence of actions
+3. Info actions show automation triggers and notifications
+4. Update actions show field changes
+
+### "Was this automation rule recently modified?"
+1. xurrent_query entity=automation_rule_audit parent_id=<rule-id> fields=id,action,created_at,created_by sort=-id per_page=5
+2. Check if the most recent entries include 'update' actions
+3. If the most recent action is 'update' and the changes show 'disabled: true', the rule was turned off
+
+### "When was this record created?"
+1. xurrent_query entity=request_audit parent_id=<request-id> fields=id,action,created_at sort=id per_page=2
+2. The lowest-ID entry is usually the 'create' action
+
+## Common Audit Actions
+
+| action | Meaning |
+|--------|---------|
+| create | Record was created |
+| update | Field(s) were changed |
+| destroy | Record was deleted |
+| info | System action (notification sent, automation triggered, email received) |
 `
 }

@@ -212,3 +212,71 @@ func TestInboundEmail_AliasesWork(t *testing.T) {
 		})
 	}
 }
+
+func TestAuditLine_HasCorrectPath(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("audit_line")
+	require.True(t, ok)
+	require.Equal(t, "/v1/audit_lines", def.Path)
+	require.Equal(t, "audit_lines", def.Plural)
+	require.Contains(t, def.Methods, "GET")
+}
+
+func TestAuditLine_HasCorrectFields(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("audit_line")
+	require.True(t, ok)
+
+	fields := map[string]bool{}
+	for _, f := range def.Fields {
+		fields[f.Name] = true
+	}
+	require.True(t, fields["action"], "should have 'action' field")
+	require.True(t, fields["audited"], "should have 'audited' field (not auditable_type)")
+	require.True(t, fields["created_by"], "should have 'created_by' field (not person)")
+	require.True(t, fields["user"], "should have 'user' field (for impersonation)")
+	require.True(t, fields["changes"], "should have 'changes' field (only on single GET)")
+	// Old incorrect field names should not exist.
+	require.False(t, fields["auditable_type"], "should NOT have 'auditable_type' (API uses 'audited')")
+	require.False(t, fields["auditable_id"], "should NOT have 'auditable_id' (API embeds entity reference)")
+	require.False(t, fields["person"], "should NOT have 'person' (API uses 'created_by')")
+}
+
+func TestAuditLine_AliasesWork(t *testing.T) {
+	t.Parallel()
+	aliases := []string{"audit_lines", "audit_entries", "auditentry", "audit line", "audit entry", "audit"}
+	for _, alias := range aliases {
+		t.Run(alias, func(t *testing.T) {
+			def, ok := LookupEntity(alias)
+			require.True(t, ok, "alias %q should resolve to audit_line", alias)
+			require.Equal(t, "Audit Line", def.Name)
+		})
+	}
+}
+
+func TestRequestAudit_HasParameterizedPath(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("request_audit")
+	require.True(t, ok)
+	require.Equal(t, "/v1/requests/{request_id}/audit", def.Path)
+	require.Equal(t, "request_audits", def.Plural)
+}
+
+func TestAutomationRuleAudit_HasParameterizedPath(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("automation_rule_audit")
+	require.True(t, ok)
+	require.Equal(t, "/v1/automation_rules/{automation_rule_id}/audit", def.Path)
+	require.Equal(t, "automation_rule_audits", def.Plural)
+}
+
+func TestAuditLine_AllFieldsHaveCorrectNames(t *testing.T) {
+	t.Parallel()
+	def, ok := LookupEntity("audit_line")
+	require.True(t, ok)
+
+	// All 7 fields should be readonly (audit entries are immutable).
+	for _, f := range def.Fields {
+		require.True(t, f.ReadOnly, "field %q should be read-only (audit entries are immutable)", f.Name)
+	}
+}

@@ -108,4 +108,16 @@ func (s *Server) registerPrompts() {
 			},
 		}, nil
 	})
+
+	s.Server.AddPrompt(&mcp.Prompt{
+		Name:        "audit-trail",
+		Description: "How to use Xurrent audit entries to investigate who changed what and when. Covers top-level audit_lines, per-entity audit (request, automation rule), and using audit data for incident investigation.",
+	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+		return &mcp.GetPromptResult{
+			Description: "Audit Trail Investigation Guide",
+			Messages: []*mcp.PromptMessage{
+				{Role: "user", Content: &mcp.TextContent{Text: auditTrailPrompt()}},
+			},
+		}, nil
+	})
 }
